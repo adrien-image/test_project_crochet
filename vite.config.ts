@@ -28,7 +28,8 @@ const csp = (): Plugin => ({
 
 export default defineConfig({
   base: './',
-  build: { target: 'es2022', chunkSizeWarningLimit: 1500 },
+  // Older phones (iOS 14+) must still parse the bundle.
+  build: { target: ['es2020', 'safari14', 'chrome87', 'firefox78'], chunkSizeWarningLimit: 1500 },
   worker: { format: 'es' },
   plugins: [
     csp(),

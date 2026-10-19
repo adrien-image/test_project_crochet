@@ -7,11 +7,14 @@ import type { Lang } from '../core/types';
 type Rule = [RegExp, string];
 
 const L = '\\p{L}';
-/** Whole-word regex that works with accented letters. */
+/**
+ * Whole-word regex that works with accented letters. The character before the
+ * word is captured as $1 (no lookbehind: Safari before 16.4 can't parse it).
+ */
 export function word(src: string, flags = 'giu'): RegExp {
-  return new RegExp(`(?<![${L}§])(?:${src})(?![${L}])`, flags);
+  return new RegExp(`(^|[^${L}§])(?:${src})(?![${L}])`, flags);
 }
-const r = (src: string, to: string): Rule => [word(src), ` ${to} `];
+const r = (src: string, to: string): Rule => [word(src), `$1 ${to} `];
 
 // Applied first, before the language rules: compound English words that
 // contain a plain stitch abbreviation ("sc2tog" contains "sc").
@@ -288,9 +291,9 @@ export const RULES: Record<Lang, Rule[]> = {
 
 /** XVA symbol notation: X = sc, V = inc, A = dec, W = 3-in-1, M = 3-tog, T = hdc, F = dc, E = tr. */
 export function xvaToCanonical(s: string): string {
-  return s.replace(/(?<![\p{L}])(\d*)\s*([XVAWMTFE])(?![\p{L}])/gu, (_m, n: string, c: string) => {
+  return s.replace(/(^|[^\p{L}])(\d*)\s*([XVAWMTFE])(?![\p{L}])/gu, (_m, pre: string, n: string, c: string) => {
     const k = { X: '§sc', V: '§inc', A: '§dec', W: '§inc3', M: '§dec3', T: '§hdc', F: '§dc', E: '§tr' }[c];
-    return ` ${n} ${k} `;
+    return `${pre} ${n} ${k} `;
   });
 }
 
@@ -304,7 +307,7 @@ const DETECT: Record<Exclude<Lang, 'en-uk'>, RegExp[]> = {
   de: [word('fm|fM|zun|abn|runde|lm|km|maschen?|jede|mal|stb|fadenring|feste', 'giu')],
   it: [word('pb|aum|giro|anello|catenella|mbss|maglie?|ogni|volte|punti|diminuzione', 'giu')],
   nl: [word('v|meerd|mind|toer|ronde|losse|hv|stk|steken|vasten|elke|keer|meerderen|minderen', 'giu')],
-  xva: [/(?<![\p{L}])\d*\s*[XVA](?![\p{L}])/gu],
+  xva: [/(?:^|[^\p{L}])\d*\s*[XVA](?![\p{L}])/gu],
 };
 
 export function detectLang(text: string): Lang {
