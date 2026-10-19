@@ -38,3 +38,12 @@ test('built page has a strict Content Security Policy', async ({ page }) => {
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("object-src 'none'");
 });
+
+test('still works when the browser blocks IndexedDB', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'indexedDB', { value: undefined });
+  });
+  await page.goto('./#/');
+  await expect(page.locator('article.pcard')).toHaveCount(3);
+  await expect(page.locator('.toast')).toContainText('bloque le stockage');
+});
