@@ -3,6 +3,7 @@ import { h, clear, toast } from './core/dom';
 import { setLang, t, type Key } from './core/i18n';
 import type { UiLang } from './core/types';
 import * as store from './store/store';
+import { isMemoryOnly } from './store/db';
 import * as filesync from './features/filesync';
 import { openStorageDialog, maybeRemindBackup, requestPersistence } from './views/storage';
 
@@ -149,6 +150,7 @@ async function boot() {
   await store.load();
   window.addEventListener('hashchange', route);
   await route();
+  if (isMemoryOnly()) toast(t('storage_memory'), undefined, 15000);
   void requestPersistence(false);
   void filesync.init();
   filesync.onState((s) => {
@@ -172,4 +174,22 @@ function registerSw() {
   });
 }
 
-void boot();
+/** Never leave a blank page: say what went wrong. */
+function showFatal(e: unknown) {
+  console.error(e);
+  const app = document.getElementById('app');
+  if (!app) return;
+  clear(app);
+  app.append(
+    h('div', { class: 'empty', role: 'alert' },
+      h('p', { style: 'font-size:2rem' }, '🧶'),
+      h('p', null, t('boot_error')),
+      h('pre', { class: 'small', style: 'white-space:pre-wrap' }, String((e as Error)?.message ?? e)),
+      h('button', { class: 'btn', onclick: () => location.reload() }, t('reload'))),
+  );
+}
+
+window.addEventListener('error', (e) => {
+  if (!document.querySelector('#app main')) showFatal(e.error ?? e.message);
+});
+boot().catch(showFatal);

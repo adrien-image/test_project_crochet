@@ -316,6 +316,9 @@ const fr = {
   sync_error: 'Erreur de synchronisation : {e}',
   sync_merged: 'Synchronisation : {n} patron(s) mis à jour.',
   sync_note: 'La couverture et le fichier joint sont synchronisés en taille réelle, les autres photos en miniature.',
+  storage_memory: 'Ce navigateur bloque le stockage (navigation privée ?) : vos patrons ne seront pas gardés après fermeture.',
+  boot_error: 'Mon Crochet n’a pas pu démarrer dans ce navigateur.',
+  reload: 'Recharger',
 };
 
 type Dict = typeof fr;
@@ -622,6 +625,9 @@ const en: Dict = {
   sync_error: 'Sync error: {e}',
   sync_merged: 'Sync: {n} pattern(s) updated.',
   sync_note: 'The cover and attached file sync at full size, other photos as thumbnails.',
+  storage_memory: 'This browser blocks storage (private window?): your patterns won’t be kept after closing.',
+  boot_error: 'Mon Crochet couldn’t start in this browser.',
+  reload: 'Reload',
 };
 
 const DICTS: Record<UiLang, Dict> = { fr, en };
