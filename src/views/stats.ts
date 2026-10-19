@@ -102,7 +102,7 @@ export function statsView(root: HTMLElement) {
     }
     const fmtVal = (v: number) => (metric === 'time' ? fmtDuration(v) : metric === 'yarn' ? fmtMeters(v) : fmtNumber(v));
     const dateFmt = (d: Date) => d.toLocaleDateString(getLang() === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short' });
-    chartBox.append(barChart(weeks.map((w) => ({ label: dateFmt(w.start), value: w[metric], title: `${t('week_of', { date: dateFmt(w.start) })} : ${fmtVal(w[metric])}` })), fmtVal));
+    chartBox.append(barChart(weeks.map((w) => ({ label: dateFmt(w.start), value: w[metric], title: `${t('week_of', { date: dateFmt(w.start) })} : ${fmtVal(w[metric])}` })), fmtVal, metric === 'time' ? 3600 : metric === 'yarn' ? 10 : 4));
     const table = h(
       'table',
       { class: 'data' },
@@ -157,11 +157,12 @@ export function statsView(root: HTMLElement) {
   return store.subscribe(render);
 }
 
-function barChart(data: { label: string; value: number; title: string }[], fmt: (v: number) => string): Element {
+function barChart(data: { label: string; value: number; title: string }[], fmt: (v: number) => string, minScale: number): Element {
   const W = 720;
   const H = 240;
   const m = { l: 56, r: 8, t: 12, b: 28 };
-  const max = Math.max(...data.map((d) => d.value), 0) || 1;
+  // An empty chart still gets a readable axis (1 h, 10 m, 4 rounds).
+  const max = Math.max(...data.map((d) => d.value), minScale);
   const nice = niceMax(max);
   const bw = (W - m.l - m.r) / data.length;
   const y = (v: number) => m.t + (H - m.t - m.b) * (1 - v / nice);

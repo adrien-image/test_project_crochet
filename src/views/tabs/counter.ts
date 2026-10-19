@@ -9,7 +9,6 @@ import { completeCurrent, undoLast } from '../../features/actions';
 import { storePhoto } from '../../features/images';
 import * as hf from '../../features/handsfree';
 import { timerBox } from '../pattern';
-import { colorHex, shade } from '../../parser/colors';
 
 const ABBR: Record<'fr' | 'en', Record<string, string>> = {
   fr: { sc: 'ms', hdc: 'db', dc: 'br', tr: 'dbr', dtr: 'tbr', ch: 'ml', sl: 'mc', mr: 'cm', inc: 'aug', dec: 'dim', inc3: '3/1', dec3: '3ens', picot: 'pic', bobble: 'bob', puff: 'puff', popcorn: 'pop', skip: 'saut' },
@@ -220,14 +219,13 @@ function ring(n: number, total: number, color: string): SVGSVGElement {
   const svg = s('svg', { viewBox: `0 0 ${size} ${size}`, 'aria-hidden': 'true' });
   const segs = Math.max(1, total);
   const gap = segs > 60 ? 0 : 0.03;
-  const light = colorHex(color) ? shade(color, 0.75) : '#eee';
-  svg.append(s('circle', { cx: c, cy: c, r: R + 12, fill: 'var(--surface)', stroke: 'var(--line)' }));
+  svg.append(s('circle', { cx: c, cy: c, r: R + 12, fill: 'var(--surface)', stroke: 'var(--line)' }), s('circle', { cx: c, cy: c, r: R, fill: 'none', stroke: 'var(--line)', 'stroke-width': 18 }));
   for (let i = 0; i < segs; i++) {
     const a0 = -Math.PI / 2 + (i / segs) * Math.PI * 2 + gap / 2;
     const a1 = -Math.PI / 2 + ((i + 1) / segs) * Math.PI * 2 - gap / 2;
     const large = a1 - a0 > Math.PI ? 1 : 0;
     const d = `M ${c + R * Math.cos(a0)} ${c + R * Math.sin(a0)} A ${R} ${R} 0 ${large} 1 ${c + R * Math.cos(a1)} ${c + R * Math.sin(a1)}`;
-    svg.append(s('path', { d, fill: 'none', stroke: i < n ? color : light, 'stroke-width': 16, 'stroke-linecap': segs > 40 ? 'butt' : 'round' }));
+    svg.append(s('path', { d, fill: 'none', stroke: i < n ? color : 'var(--surface-2)', 'stroke-width': 16, 'stroke-linecap': segs > 40 ? 'butt' : 'round' }));
   }
   const over = total > 0 && n > total;
   svg.append(
