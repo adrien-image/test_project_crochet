@@ -184,7 +184,7 @@ async function emptyTrash() {
 export async function duplicate(id: string, keepProgress: boolean, suffix: string): Promise<Pattern | undefined> {
   const src = patterns.get(id);
   if (!src) return undefined;
-  const copy: Pattern = structuredClone(src);
+  const copy: Pattern = JSON.parse(JSON.stringify(src));
   copy.id = uid();
   copy.name = `${src.name} ${suffix}`.trim();
   copy.createdAt = copy.updatedAt = Date.now();

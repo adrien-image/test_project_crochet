@@ -36,7 +36,8 @@ const NAMES: [string, string][] = [
 ];
 
 const COMPILED = NAMES.map(([src, hex]) => ({
-  re: new RegExp(`(?<![\\p{L}])(?:${src})(?![\\p{L}])`, 'iu'),
+  // The character before the word is group 1 (no lookbehind for older Safari).
+  re: new RegExp(`(^|[^\\p{L}])(${src})(?![\\p{L}])`, 'iu'),
   hex,
 }));
 
@@ -53,7 +54,7 @@ export function findColorWord(text: string): { word: string; hex: string; index:
   let best: { word: string; hex: string; index: number } | undefined;
   for (const c of COMPILED) {
     const m = text.match(c.re);
-    if (m && m.index !== undefined && (!best || m.index < best.index)) best = { word: m[0], hex: c.hex, index: m.index };
+    if (m && m.index !== undefined && (!best || m.index + m[1].length < best.index)) best = { word: m[2], hex: c.hex, index: m.index + m[1].length };
   }
   return best;
 }

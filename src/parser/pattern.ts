@@ -18,7 +18,9 @@ export function selectSize(text: string, index: number): { text: string; sizes: 
   let out = text.replace(/(\d+)\s*\(\s*(\d+(?:\s*[,/;]\s*\d+)+)\s*\)/g, (_m, a: string, rest: string) =>
     pick([a, ...rest.split(/\s*[,/;]\s*/)]),
   );
-  out = out.replace(/(?<!\d\s?)\(\s*(\d+(?:\s*[,/;]\s*\d+)+)\s*\)/gu, (_m, rest: string) => `(${pick(rest.split(/\s*[,/;]\s*/))})`);
+  out = out.replace(/\(\s*(\d+(?:\s*[,/;]\s*\d+)+)\s*\)/gu, (m, rest: string, offset: number, str: string) =>
+    /\d\s?$/.test(str.slice(Math.max(0, offset - 2), offset)) ? m : `(${pick(rest.split(/\s*[,/;]\s*/))})`,
+  );
   return { text: out, sizes };
 }
 
@@ -111,7 +113,7 @@ export function matchLabel(line: string): Label | null {
 // ---------- Pieces ----------
 
 const COPIES_RE =
-  /(?:make|faire|fais|crocheter|r[ée]aliser|haz|hacer|tejer|fa[cç]a|fazer|h[äa]kle|fare|maak|haak)\s*(\d+)|[(\[]\s*(?:x\s*)?(\d+)\s*(?:x|fois|times|pcs|pieces|pi[eè]ces|st[üu]ck|piezas|pe[cç]as|pezzi|stuks)?\s*[)\]]|(?<![\p{L}])x\s*(\d+)(?![\p{L}\d])|(?<![\p{L}\d])(\d+)\s*x(?![\p{L}])|(?<![\p{L}])[×]\s*(\d+)/iu;
+  /(?:make|faire|fais|crocheter|r[ée]aliser|haz|hacer|tejer|fa[cç]a|fazer|h[äa]kle|fare|maak|haak)\s*(\d+)|[(\[]\s*(?:x\s*)?(\d+)\s*(?:x|fois|times|pcs|pieces|pi[eè]ces|st[üu]ck|piezas|pe[cç]as|pezzi|stuks)?\s*[)\]]|(?:^|[^\p{L}])x\s*(\d+)(?![\p{L}\d])|(?:^|[^\p{L}\d])(\d+)\s*x(?![\p{L}])|(?:^|[^\p{L}])[×]\s*(\d+)/iu;
 const CONTINUED_RE = /\(?\s*(?:continued|cont\.?|suite|continuaci[oó]n|continua[cç][aã]o|fortsetzung|continua|vervolg)\s*\)?/iu;
 const PLURAL_PAIRS =
   /\b(?:ears|arms|legs|feet|eyes|wings|antennae|antennas|horns|paws|cheeks|oreilles|jambes|pieds|pattes|yeux|ailes|antennes|cornes|joues|orejas|brazos|piernas|patas|ojos|alas|orelhas|bra[cç]os|pernas|olhos|asas|ohren|arme|beine|f[üu][sß]e|augen|fl[üu]gel|orecchie|braccia|gambe|occhi|ali|oren|armen|benen|voeten|ogen|vleugels)\b/iu;
@@ -199,10 +201,10 @@ interface ColorRef {
 
 function findColorRef(raw: string, legend: ColorLegendEntry[], fullText: string): ColorRef | undefined {
   // Keys are upper-case ("with C"), the words before them may not be ("With C").
-  const text = raw.replace(/(?<![\p{L}])(With|In|Using|Use|En|Avec|Con|Com|Em|Mit|Met|To|Pour|Para|Zu|Naar)(?![\p{L}])/gu, (w) => w.toLowerCase());
+  const text = raw.replace(/(^|[^\p{L}])(With|In|Using|Use|En|Avec|Con|Com|Em|Mit|Met|To|Pour|Para|Zu|Naar)(?![\p{L}])/gu, (_m, pre: string, w: string) => pre + w.toLowerCase());
   const change = /\b(?:change|switch|changer|changez|passer|cambiar|cambia|trocar|troque|wechseln|wechsle|cambiare|wissel|fasten off|join|attach|use|utiliser|prendre|continue[rz]?|continuer)\b/iu.test(text);
   const keyRe = new RegExp(
-    `(?:${COLOR_KEY_WORD}\\s*(#?\\s*[A-Z0-9]{1,5})(?![\\p{L}\\d])|(?<![\\p{L}])(?:with|in|using|use|en|avec|con|com|em|mit|met|to|à|au|pour|a|para|zu|naar)\\s+(MC|CC\\d?|[A-F])(?![\\p{L}\\d]))`,
+    `(?:${COLOR_KEY_WORD}\\s*(#?\\s*[A-Z0-9]{1,5})(?![\\p{L}\\d])|(?:^|[^\\p{L}])(?:with|in|using|use|en|avec|con|com|em|mit|met|to|à|au|pour|a|para|zu|naar)\\s+(MC|CC\\d?|[A-F])(?![\\p{L}\\d]))`,
     'u',
   );
   const km = text.match(keyRe);
@@ -278,7 +280,7 @@ const PART_WORDS =
 
 export function findPositions(text: string): PositionHint[] {
   const hints: PositionHint[] = [];
-  const sentences = text.split(/(?<=[.!?\n])\s+/);
+  const sentences = text.replace(/([.!?\n])\s+/g, '$1\u0000').split('\u0000');
   const between = new RegExp(
     `(?:between|entre|zwischen|tra|fra|tussen)\\s+(?:the\\s+|les\\s+|las\\s+|os\\s+|den\\s+|i\\s+|de\\s+)?(?:${ROUNDWORD}|r)?\\.?\\s*(\\d+)\\s*(?:and|et|y|e|und|en|&|-|–|à)\\s*(?:${ROUNDWORD}|r)?\\.?\\s*(\\d+)`,
     'iu',
@@ -586,7 +588,7 @@ function stripColorRefs(text: string, legend: ColorLegendEntry[]): string {
   let s = text.replace(new RegExp(`${COLOR_KEY_WORD}\\s*#?\\s*[A-Z0-9]{1,5}(?![\\p{L}\\d])`, 'giu'), ' ');
   if (legend.length) {
     const keys = legend.map((e) => e.key.replace(/[^A-Z0-9]/gi, '')).filter(Boolean).join('|');
-    if (keys) s = s.replace(new RegExp(`(?<![\\p{L}])(?:with|in|using|en|avec|con|com|em|mit|met|to|à|au|pour|para|zu|naar)\\s+(?:${keys})(?![\\p{L}\\d])`, 'gu'), ' ');
+    if (keys) s = s.replace(new RegExp(`(^|[^\\p{L}])(?:with|in|using|en|avec|con|com|em|mit|met|to|à|au|pour|para|zu|naar)\\s+(?:${keys})(?![\\p{L}\\d])`, 'gu'), '$1 ');
   }
   s = s.replace(/\b(?:change|switch)\s+to\b/giu, ' ');
   return s;

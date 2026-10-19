@@ -67,7 +67,7 @@ export function canonicalize(text: string, lang: Lang): string {
   s = s.replace(/(\d+)\s*(?:st|nd|rd|th|e|ème|eme|er|re|ère|º|°|ª|o|a|\.)(?![\p{L}\d])(?=\s*\p{L})/gu, ' $1 §ord ');
   // Repeat marks: "x6", "6x", ")*6".
   s = s.replace(/([)\]*])\s*\*\s*(\d+)/g, '$1 §timesmark $2 ');
-  s = s.replace(/(?<![\p{L}§])x\s*(\d+)/gu, ' §timesmark $1 ');
+  s = s.replace(/(^|[^\p{L}§])x\s*(\d+)/gu, '$1 §timesmark $2 ');
   s = s.replace(/(\d+)\s*x(?![\p{L}\d])/gu, ' $1 §timesmark ');
   for (const [re, to] of RULES[lang]) s = s.replace(re, to);
   return s;

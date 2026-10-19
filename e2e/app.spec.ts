@@ -47,3 +47,10 @@ test('still works when the browser blocks IndexedDB', async ({ page }) => {
   await expect(page.locator('article.pcard')).toHaveCount(3);
   await expect(page.locator('.toast')).toContainText('bloque le stockage');
 });
+
+test('a browser that cannot run the app gets a message, not a blank page', async ({ page }) => {
+  // Simulate an old browser choking on the bundle.
+  await page.route(/\/assets\/index-[^/]+\.js$/, (route) => route.fulfill({ contentType: 'text/javascript', body: 'let x = (;' }));
+  await page.goto('./');
+  await expect(page.getByRole('alert')).toContainText(/n’a pas pu démarrer|couldn’t start/, { timeout: 15_000 });
+});
