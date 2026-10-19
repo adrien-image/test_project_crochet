@@ -23,8 +23,10 @@ language data from `node_modules` into `public/tesseract/` (see `scripts/copy-te
 
 ## Deployment
 
-`.github/workflows/pages.yml` publishes `dist/` to GitHub Pages on every push to `main`.
-Enable it once in the repository settings: **Settings → Pages → Source: GitHub Actions**.
+`.github/workflows/pages.yml` builds the site on every push to `main` and publishes `dist/`
+to the `gh-pages` branch. GitHub Pages serves that branch
+(**Settings → Pages → Deploy from a branch: `gh-pages` / root**) at
+https://adrien-image.github.io/test_project_crochet/.
 The build uses relative paths and hash routing, so it works from any sub-folder.
 
 ## Features
